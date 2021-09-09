@@ -1,14 +1,41 @@
-import React from "react";
+import React, { useEffect } from "react";
+import axios from "axios";
+import { useStoreState } from "pullstate";
 import { Store1 } from "./Store";
+import Place from "./Place";
 
 function Main() {
-    const { isDarkMode, isMobile } = UIStore.useState(s => ({
-        isDarkMode: s.isDarkMode,
-        isMobile: s.isMobile
-      }));
-  function toggleMode(s) {
-    s.isDarkMode = !s.isDarkMode;
+  const allState = useStoreState(Store1);
+  const { isDarkMode, isMobile, places } = Store1.useState((s) => ({
+    isDarkMode: s.isDarkMode,
+    isMobile: s.isMobile,
+    places: s.places,
+  }));
+
+  // const testOddOrEven = Store1.subscribe(
+  //   s => s.isMobile,
+  //   newTemplate => {
+  //     tileLayer.setUrl(newTemplate.url);
+  //   }
+  // );
+
+  function toggleMode(e) {
+    Store1.update((s) => {
+      s.isDarkMode = !isDarkMode;
+      s.isMobile = isMobile + 1;
+    });
   }
+  useEffect(() => {
+    //fetching data
+    axios
+      .get("https://610bb7502b6add0017cb3a35.mockapi.io/api/v1/places")
+      .then((data) => {
+        Store1.update((s) => {
+          s.places = data.data;
+        });
+      });
+  }, []);
+
   return (
     <div
       style={{
@@ -17,9 +44,11 @@ function Main() {
       }}
     >
       <h1>Hello Pullstate</h1>
-      <button onClick={() => Store1.update(toggleMode)}>
-        Toggle Dark Mode
-      </button>
+      <button onClick={toggleMode}>Toggle Dark Mode</button>
+      <h1>isMobile:{allState.isMobile}</h1>
+
+      {places &&
+        places.map((place) => <Place key={place.id} place={place}></Place>)}
     </div>
   );
 }
